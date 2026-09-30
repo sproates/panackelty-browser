@@ -1,0 +1,34 @@
+name: Check
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: sproates/panackelty
+          ref: ed319c38e671e4c590d5d80fa3e20a01ff87bd93
+          path: core
+          persist-credentials: false
+      - name: Materialize pinned core browser-runtime bundle
+        run: make -C core browser-runtime-bundle && mv core/build/browser-runtime core-runtime
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install WASI SDK
+        run: |
+          sh core/scripts/install_wasi_sdk.sh "$RUNNER_TEMP/playground-sdk"
+          echo "WASI_SDK_PATH=$RUNNER_TEMP/playground-sdk/wasi-sdk-34.0-x86_64-linux" >> "$GITHUB_ENV"
+      - run: npm run build
+      - run: npm test
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:browser
