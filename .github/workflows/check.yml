@@ -5,6 +5,7 @@ on:
     branches: [main]
 permissions:
   contents: read
+  pull-requests: write
 jobs:
   browser:
     runs-on: ubuntu-24.04
@@ -32,3 +33,18 @@ jobs:
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:browser
+      - name: Package visual review site
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p build/preview
+          cp -R build/playground/. build/preview/
+          printf '%s\n' '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./">' > /dev/null
+      - name: Upload visual review site
+        if: github.event_name == 'pull_request'
+        id: preview
+        uses: actions/upload-artifact@v6
+        with:
+          name: visual-preview-pr-${{ github.event.pull_request.number }}
+          path: build/preview
+          if-no-files-found: error
+          retention-days: 14
