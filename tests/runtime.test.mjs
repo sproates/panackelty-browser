@@ -1,7 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {compileAndRun,sourceBytes,SOURCE_LIMIT} from '../runtime.mjs';
+const assetVersion=fs.readFileSync('build/playground/asset-version.txt','utf8').trim();
+const builtRuntime=await import(new URL(`../build/playground/assets/${assetVersion}/runtime.mjs`,import.meta.url));
+const {compileAndRun,sourceBytes,SOURCE_LIMIT}=builtRuntime;
 import {Playground} from '../controller.mjs';
 import {examples,exampleGuides} from '../examples.mjs';
 
