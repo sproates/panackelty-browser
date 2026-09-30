@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Write and run Panackelty in your browser. Explore exact arithmetic, pure functions and the standard library without installing anything.">
+  <title>Try Panackelty — browser playground</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to editor</a>
+  <header class="site-header">
+    <a class="brand" href="../"><span class="brand-mark" aria-hidden="true">P</span><span>Panackelty</span></a>
+    <nav aria-label="Primary navigation"><a href="../#capabilities">Capabilities</a><a href="../#examples">Examples</a><a href="../#start">Install locally</a></nav>
+  </header>
+  <main id="main" class="playground">
+    <p class="eyebrow">No installation needed</p>
+    <h1>Try <em>Panackelty.</em></h1>
+    <p class="intro">Start with an example, change a value, and run it. Your program compiles and runs on your device; its source is not sent to a server.</p>
+    <p class="version-note">Experimental browser edition · current development compiler · bytecode v9. The alpha.10 download also uses v9; browser host capabilities are more limited.</p>
+    <div class="example-picker"><label for="example">Start with</label><select id="example"></select><button id="load" type="button">Load example</button></div>
+    <aside class="example-guide" aria-labelledby="example-title">
+      <h2 id="example-title">Hello, browser</h2>
+      <p id="example-description"></p>
+      <p><strong>Try changing it:</strong> <span id="example-edit"></span></p>
+      <details><summary>Expected output for the original example</summary><pre id="expected-output"></pre></details>
+    </aside>
+    <div class="workspace">
+      <section aria-labelledby="program-title">
+        <h2 id="program-title"><label for="source">Program</label></h2>
+        <textarea id="source" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="editor-help">main(): Void {
+  print("Hello, browser!")
+}
+</textarea>
+        <p id="editor-help">Edit freely. Loading an example replaces the editor. Each run starts fresh; keep a copy of code you want to save.</p>
+        <div class="run-controls"><button id="run" type="button">Run program</button><button id="stop" type="button" disabled>Stop</button><span id="status" role="status">Ready</span></div>
+        <noscript><p>Enable JavaScript to run programs, or <a href="../#start">install the command-line toolchain</a>.</p></noscript>
+      </section>
+      <section aria-labelledby="output-title"><h2 id="output-title">Output &amp; diagnostics</h2><pre id="output" tabindex="0" aria-label="Program output">Run a program to see its output here.</pre></section>
+    </div>
+    <section class="how-it-works" aria-labelledby="how-title">
+      <p class="eyebrow">From source to output</p>
+      <h2 id="how-title">How does this work?</h2>
+      <p>When you press <strong>Run program</strong>, Panackelty checks your code and compiles it into bytecode: instructions for the Panackelty virtual machine (VM). The VM then executes those instructions and displays the output above.</p>
+      <figure class="execution-diagram">
+        <figcaption>Inside your browser</figcaption>
+        <div class="execution-views">
+          <div class="runtime-stack">
+            <h3>What runs where</h3>
+            <div class="runtime-card"><span class="layer-label">Built into the browser</span><strong>WebAssembly engine</strong><p>Executes WebAssembly modules.</p></div>
+            <div class="layer-link"><span aria-hidden="true">↓</span> runs</div>
+            <div class="runtime-card vm-card"><span class="layer-label">Loaded by this page</span><strong>Panackelty VM</strong><p>A WebAssembly module that executes Panackelty bytecode.</p></div>
+          </div>
+          <div class="program-flow">
+            <h3>What happens when you press Run</h3>
+            <ol>
+              <li><strong>Your source code</strong><span>The text you enter in the editor.</span></li>
+              <li class="vm-operation"><strong>Compile <span class="run-location">on the VM</span></strong><span>The compiler checks your source.</span></li>
+              <li><strong>Panackelty bytecode</strong><span>The instructions produced by the compiler.</span></li>
+              <li class="vm-operation"><strong>Execute <span class="run-location">on the VM</span></strong><span>A fresh VM instance runs those instructions.</span></li>
+              <li><strong>Your output</strong><span>Results appear above.</span></li>
+            </ol>
+          </div>
+        </div>
+        <p class="diagram-key">The compiler is itself a Panackelty bytecode program. Both compilation and execution use the same Panackelty VM implementation.</p>
+      </figure>
+      <p class="execution-note">Compilation and execution happen on your device; your source code is not sent to a server. Each run starts fresh.</p>
+    </section>
+    <details class="limits"><summary>What can I run here?</summary>
+      <p>Complete programs using exact numbers, types, pure functions, collections and supported standard-library operations. Compiler errors appear above, with source positions where available.</p>
+      <p>Programs cannot access your device files, start processes or use networking. Runtime file writes and typed native host services are unavailable; standard input is empty. This is not a persistent REPL.</p>
+      <p>Limits: 32 KiB UTF-8 source and output, a 15-second foreground timeout and 256 MiB of linear memory per VM instance. The browser uses additional memory. Background timers may be delayed; Stop ends the worker.</p>
+    </details>
+    <footer><a href="../">Back to Panackelty</a> · <a href="https://github.com/sproates/panackelty/blob/main/SPEC.md">Language reference</a> · <a href="provenance.json">Build inputs</a> · <a href="LICENSE">License</a> · <a href="vendor/LICENSE-MIT">WASI adapter license</a></footer>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

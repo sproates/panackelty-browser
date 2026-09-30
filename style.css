@@ -1,0 +1,60 @@
+.playground { max-width: 1200px; margin: auto; padding: 40px 24px; }
+.playground h1 { font: 400 clamp(2.5rem, 6vw, 4rem)/1.12 var(--serif); margin: 12px 0 24px; }
+.playground h1 em { color: var(--accent); font-weight: 400; }
+.intro { max-width: 760px; font-size: 1.15rem; }
+.version-note, #editor-help, .limits p, footer { color: var(--muted); }
+.version-note, #editor-help { font-size: .9rem; }
+.example-picker, .run-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.example-picker { margin: 28px 0; }
+.example-guide { margin-bottom: 28px; padding: 18px 22px; border-left: 3px solid var(--accent); background: var(--panel); }
+.example-guide h2 { margin: 0; font: 600 1.15rem var(--sans); }
+.example-guide p { max-width: 850px; color: var(--muted); }
+.example-guide summary { cursor: pointer; min-height: 44px; }
+.example-guide #expected-output { min-height: 0; max-height: 240px; }
+.workspace { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; }
+.workspace section { min-width: 0; }
+.workspace h2 { font: 600 1rem var(--sans); margin: 0 0 12px; }
+.playground textarea, .playground pre { box-sizing: border-box; width: 100%; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: 16px/1.6 var(--mono); }
+.playground textarea { min-height: 330px; resize: vertical; tab-size: 2; }
+.playground pre { min-height: 330px; max-height: 600px; margin: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.playground button, .playground select { min-height: 46px; max-width: 100%; padding: 10px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; }
+.playground button { cursor: pointer; }
+#run { background: var(--accent); color: var(--ground); font-weight: 650; }
+.playground button:disabled { opacity: .45; cursor: default; }
+#status { font-size: .9rem; color: var(--signal); }
+.limits { margin-top: 36px; padding: 20px 0; border-top: 1px solid var(--line); }
+.limits summary { cursor: pointer; min-height: 44px; }
+.playground footer { padding: 24px 0; font-size: .85rem; }
+.playground :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+@media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .playground { padding: 24px 18px; } .playground pre { min-height: 140px; max-height: 350px; } }
+
+.how-it-works { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--line); }
+.how-it-works h2 { margin: 10px 0 18px; font: 400 clamp(1.8rem, 4vw, 2.4rem)/1.2 var(--serif); }
+.how-it-works > p { max-width: 820px; }
+.execution-diagram { margin: 28px 0 20px; padding: 26px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.execution-diagram figcaption { font-weight: 650; }
+.execution-views { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 22px; }
+.execution-views h3 { margin: 0 0 20px; color: var(--muted); font-size: .9rem; font-weight: 500; }
+.runtime-card { display: flex; flex-direction: column; gap: 10px; padding: 22px; border: 1px solid var(--accent); border-radius: 10px; background: var(--ground); }
+.runtime-card strong { color: var(--accent); font-size: 1.1rem; }
+.runtime-card.vm-card { border-color: var(--signal); }
+.vm-card strong { color: var(--signal); }
+.layer-label { color: var(--muted); font: .7rem/1.5 var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+.execution-diagram p { margin: 0; color: var(--muted); font-size: .9rem; }
+.layer-link { display: flex; justify-content: center; align-items: center; gap: 10px; height: 48px; color: var(--muted); font-size: .85rem; }
+.layer-link span { color: var(--accent); font-size: 1.6rem; }
+.program-flow ol { list-style: none; padding: 0 0 0 24px; margin: 0; }
+.program-flow li { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 0 0 22px 20px; border-left: 1px solid var(--line); }
+.program-flow li::before { content: ""; position: absolute; top: 5px; left: -5px; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.program-flow li:last-child { padding-bottom: 0; border-color: transparent; }
+.program-flow li > span { color: var(--muted); font-size: .85rem; }
+.program-flow .vm-operation::before { background: var(--signal); }
+.program-flow .run-location { display: inline-block; margin-left: 6px; color: var(--signal); font: .75rem var(--mono); }
+.execution-diagram .diagram-key { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); font-size: .85rem; }
+.execution-note { color: var(--muted); font-size: .95rem; }
+@media (max-width: 760px) {
+  .execution-diagram { padding: 20px; }
+  .execution-views { grid-template-columns: 1fr; gap: 28px; }
+  .runtime-card { padding: 20px; }
+  .program-flow ol { padding-left: 5px; }
+}
