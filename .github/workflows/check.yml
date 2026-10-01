@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v6
         with:
           repository: sproates/panackelty
@@ -26,15 +28,40 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Restore pinned WASI SDK
+        id: sdk
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/playground-sdk/wasi.tar.gz
+          key: wasi-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('install_wasi_sdk.sh') }}
       - name: Install WASI SDK
         run: |
-          sh core/scripts/install_wasi_sdk.sh "$RUNNER_TEMP/playground-sdk"
+          sh install_wasi_sdk.sh "$RUNNER_TEMP/playground-sdk"
           echo "WASI_SDK_PATH=$RUNNER_TEMP/playground-sdk/wasi-sdk-34.0-x86_64-linux" >> "$GITHUB_ENV"
-      - run: npm run build
-      - run: npm test
+      - name: Build twice and verify deterministic output
+        run: |
+          npm run build
+          cp build/playground/asset-version.txt "$RUNNER_TEMP/first-version.txt"
+          cp build/playground/assets/*/vm.wasm "$RUNNER_TEMP/first.wasm"
+          npm run build
+          cmp "$RUNNER_TEMP/first-version.txt" build/playground/asset-version.txt
+          cmp "$RUNNER_TEMP/first.wasm" build/playground/assets/*/vm.wasm
+      - name: Build native oracle and run all contracts
+        run: make -C core native && npm test
+      - name: Restore matching browser engines
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:browser
+      - name: Preserve browser failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failures
+          path: test-results
       - name: Package the validated browser artifact
         run: npm run package
       - uses: actions/upload-artifact@v4
