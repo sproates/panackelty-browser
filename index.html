@@ -84,7 +84,16 @@
       <p>Programs cannot access your device files, start processes or use networking. Runtime file writes and typed native host services are unavailable; standard input is empty. This is not a persistent REPL.</p>
       <p>Limits: 32 KiB UTF-8 source and output, a 15-second foreground timeout and 256 MiB of linear memory per VM instance. The browser uses additional memory. Background timers may be delayed; Stop ends the worker.</p>
     </details>
-    <footer><a href="../">Back to Panackelty</a> · <a href="https://github.com/sproates/panackelty/blob/main/SPEC.md">Language reference</a> · <a href="https://github.com/sproates/panackelty-browser">Browser source</a> · <a href="provenance.json">Build inputs</a> · <a href="LICENSE">License</a> · <a href="vendor/LICENSE-MIT">WASI adapter license</a></footer>
+    <footer class="playground-footer">
+      <ul aria-label="Playground resources">
+        <li><a href="../">Back to Panackelty</a></li>
+        <li><a href="https://github.com/sproates/panackelty/blob/main/SPEC.md">Language reference</a></li>
+        <li><a href="https://github.com/sproates/panackelty-browser">Browser source</a></li>
+        <li><a href="provenance.json">Build inputs</a></li>
+        <li><a href="LICENSE">License</a></li>
+        <li><a href="vendor/LICENSE-MIT">WASI adapter license</a></li>
+      </ul>
+    </footer>
   </main>
   <script type="module" src="app.mjs"></script>
 </body>

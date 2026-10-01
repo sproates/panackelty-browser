@@ -7,6 +7,51 @@ async function run(page,source){
   await page.getByRole('button',{name:'Run program',exact:true}).click();
   await expect(page.getByRole('button',{name:'Run program',exact:true})).toBeEnabled();
 }
+test('footer resources wrap as intact accessible links on desktop and mobile', async({page}) => {
+  for (const width of [1280, 768, 390, 320]) {
+    await page.setViewportSize({width, height: 844});
+    await page.goto('/playground/');
+    const resources = page.getByRole('list', {name: 'Playground resources'});
+    await expect(resources.getByRole('link')).toHaveText([
+      'Back to Panackelty', 'Language reference', 'Browser source',
+      'Build inputs', 'License', 'WASI adapter license'
+    ]);
+    await resources.scrollIntoViewIfNeeded();
+    const layout = await resources.evaluate(list => {
+      const links = [...list.querySelectorAll('a')];
+      return {
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        boxes: links.map(link => {
+          const {left, right, top, bottom, height} = link.getBoundingClientRect();
+          return {left, right, top, bottom, height};
+        }),
+        destinations: links.map(link => link.getAttribute('href'))
+      };
+    });
+    expect(layout.destinations).toEqual([
+      '../', 'https://github.com/sproates/panackelty/blob/main/SPEC.md',
+      'https://github.com/sproates/panackelty-browser', 'provenance.json',
+      'LICENSE', 'vendor/LICENSE-MIT'
+    ]);
+    expect(layout.scrollWidth).toBeLessThanOrEqual(width);
+    for (const [index, box] of layout.boxes.entries()) {
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.right).toBeLessThanOrEqual(width);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      for (const other of layout.boxes.slice(index + 1)) {
+        expect(box.right <= other.left || other.right <= box.left ||
+          box.bottom <= other.top || other.bottom <= box.top).toBe(true);
+      }
+    }
+    if (width === 1280) expect(new Set(layout.boxes.map(box => box.top)).size).toBe(1);
+    await resources.getByRole('link').first().focus();
+    for (const link of await resources.getByRole('link').all()) {
+      await expect(link).toBeFocused();
+      await page.keyboard.press('Tab');
+    }
+  }
+});
 test('real worker compiles stdlib and exact values, reports source errors, renders literal text',async({page})=>{
   await page.goto('/playground/');
   await page.getByRole('button',{name:'Run program',exact:true}).click();

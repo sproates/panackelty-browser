@@ -50,7 +50,7 @@ No website deployment occurs from this repository.
 
 This repository owns the complete suite migrated from core: 15 runtime tests
 (including all 145 VM corpus cases: 131 exact results and 14 explicit host
-rejections), the asset identity test, release safety tests, and seven browser
+rejections), the asset identity test, release safety tests, and eight browser
 scenarios in each of Chromium, Firefox and WebKit. These cover every example,
 native CLI output and bytecode equivalence, bounds, cancellation, timeout,
 diagnostics, host restrictions, layout, navigation and real HTTP cache upgrades.
