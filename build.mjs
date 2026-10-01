@@ -30,7 +30,7 @@ const stdlib=Object.fromEntries(fs.readdirSync(path.join(core,'stdlib')).filter(
 fs.writeFileSync(path.join(out,'stdlib.json'),JSON.stringify(stdlib));
 fs.writeFileSync(path.join(out,'package.json'),'{"type":"module"}\n');
 const hash=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-fs.writeFileSync(path.join(out,'provenance.json'),JSON.stringify({coreManifest:hash(path.join(core,'MANIFEST')),toolchain:version.stdout.trim(),artifacts:Object.fromEntries(['vm.wasm','compiler.bc','stdlib.json'].map(n=>[n,hash(path.join(out,n))]))},null,2)+'\n');
+fs.writeFileSync(path.join(out,'provenance.json'),JSON.stringify({coreManifest:hash(path.join(core,'MANIFEST')),toolchain:version.stdout.split('\n').filter(line=>!line.startsWith('InstalledDir:')&&!line.startsWith('Configuration file:')).join('\n').trim(),artifacts:Object.fromEntries(['vm.wasm','compiler.bc','stdlib.json'].map(n=>[n,hash(path.join(out,n))]))},null,2)+'\n');
 versionAssets(out);
 const site=path.join(root,'build/site');fs.rmSync(site,{recursive:true,force:true});fs.mkdirSync(site,{recursive:true});
 fs.cpSync(out,path.join(site,'playground'),{recursive:true});
