@@ -24,10 +24,11 @@
 #status { font-size: .9rem; color: var(--signal); }
 .limits { margin-top: 36px; padding: 20px 0; border-top: 1px solid var(--line); }
 .limits summary { cursor: pointer; min-height: 44px; }
-.playground-footer { display: block; width: 100%; min-height: 0; margin: 0; padding: 24px 0; font-size: .9rem; }
-.playground-footer ul { display: flex; flex-wrap: wrap; gap: 4px 24px; margin: 0; padding: 0; list-style: none; }
+.playground-footer { display: block; width: 100%; min-height: 0; margin: 0; padding: 24px 0; font-size: 1rem; }
+.playground-footer ul { margin: 0; padding: 0; list-style: none; }
 .playground-footer li { min-width: 0; }
-.playground-footer a { display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+.playground-footer a { align-items: center; gap: 24px; min-height: 44px; overflow-wrap: anywhere; }
+.playground-footer a span { flex-shrink: 0; }
 .playground :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
 @media (max-width: 760px) { .workspace { grid-template-columns: 1fr; } .playground { padding: 24px 18px; } .playground pre { min-height: 140px; max-height: 350px; } }
 
