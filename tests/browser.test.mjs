@@ -7,6 +7,59 @@ async function run(page,source){
   await page.getByRole('button',{name:'Run program',exact:true}).click();
   await expect(page.getByRole('button',{name:'Run program',exact:true})).toBeEnabled();
 }
+test('footer resources use full-width rows on desktop and mobile', async({page}) => {
+  for (const width of [1280, 768, 390, 320]) {
+    await page.setViewportSize({width, height: 844});
+    await page.goto('/playground/');
+    const resources = page.getByRole('list', {name: 'Playground resources'});
+    const names = ['Back to Panackelty', 'Language reference', 'Browser source',
+      'Build inputs', 'License', 'WASI adapter license'];
+    await expect(resources.getByRole('link')).toHaveCount(names.length);
+    for (const name of names) await expect(resources.getByRole('link', {name, exact:true})).toBeVisible();
+    await resources.scrollIntoViewIfNeeded();
+    const layout = await resources.evaluate(list => {
+      const links = [...list.querySelectorAll('a')];
+      return {
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        boxes: links.map(link => {
+          const {left, right, top, bottom, height} = link.getBoundingClientRect();
+          return {left, right, top, bottom, height};
+        }),
+        destinations: links.map(link => link.getAttribute('href'))
+      };
+    });
+    expect(layout.destinations).toEqual([
+      '../', 'https://github.com/sproates/panackelty/blob/main/SPEC.md',
+      'https://github.com/sproates/panackelty-browser',
+      expect.stringMatching(/^assets\/[a-f0-9]{64}\/provenance\.json$/),
+      expect.stringMatching(/^assets\/[a-f0-9]{64}\/LICENSE$/),
+      expect.stringMatching(/^assets\/[a-f0-9]{64}\/vendor\/LICENSE-MIT$/)
+    ]);
+    expect(layout.scrollWidth).toBeLessThanOrEqual(width);
+    for (const [index, box] of layout.boxes.entries()) {
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.right).toBeLessThanOrEqual(width);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      for (const other of layout.boxes.slice(index + 1)) {
+        // Adjacent fractional CSS-pixel edges can differ by floating-point
+        // roundoff in Gecko. Gecko reported a 0.000015px overlap for adjoining rows.
+        // Reject overlap beyond 0.001 CSS px (well below a layout unit).
+        const horizontal = Math.min(box.right, other.right) - Math.max(box.left, other.left);
+        const vertical = Math.min(box.bottom, other.bottom) - Math.max(box.top, other.top);
+        expect(Math.min(horizontal, vertical), JSON.stringify({width, box, other})).toBeLessThanOrEqual(0.001);
+      }
+    }
+    expect(new Set(layout.boxes.map(box => box.left)).size).toBe(1);
+    expect(new Set(layout.boxes.map(box => box.right)).size).toBe(1);
+    expect(new Set(layout.boxes.map(box => box.top)).size).toBe(names.length);
+    await resources.getByRole('link').first().focus();
+    for (const link of await resources.getByRole('link').all()) {
+      await expect(link).toBeFocused();
+      await page.keyboard.press('Tab');
+    }
+  }
+});
 test('real worker compiles stdlib and exact values, reports source errors, renders literal text',async({page})=>{
   await page.goto('/playground/');
   await page.getByRole('button',{name:'Run program',exact:true}).click();
