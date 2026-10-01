@@ -31,8 +31,10 @@ test('footer resources wrap as intact accessible links on desktop and mobile', a
     });
     expect(layout.destinations).toEqual([
       '../', 'https://github.com/sproates/panackelty/blob/main/SPEC.md',
-      'https://github.com/sproates/panackelty-browser', 'provenance.json',
-      'LICENSE', 'vendor/LICENSE-MIT'
+      'https://github.com/sproates/panackelty-browser',
+      expect.stringMatching(/^assets\/[a-f0-9]{64}\/provenance\.json$/),
+      expect.stringMatching(/^assets\/[a-f0-9]{64}\/LICENSE$/),
+      expect.stringMatching(/^assets\/[a-f0-9]{64}\/vendor\/LICENSE-MIT$/)
     ]);
     expect(layout.scrollWidth).toBeLessThanOrEqual(width);
     for (const [index, box] of layout.boxes.entries()) {
