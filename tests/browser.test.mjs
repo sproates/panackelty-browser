@@ -43,10 +43,11 @@ test('footer resources use full-width rows on desktop and mobile', async({page})
       expect(box.height).toBeGreaterThanOrEqual(44);
       for (const other of layout.boxes.slice(index + 1)) {
         // Adjacent fractional CSS-pixel edges can differ by floating-point
-        // roundoff in Gecko. Reject overlap beyond one millionth of a pixel.
+        // roundoff in Gecko. Gecko reported a 0.000015px overlap for adjoining rows.
+        // Reject overlap beyond 0.001 CSS px (well below a layout unit).
         const horizontal = Math.min(box.right, other.right) - Math.max(box.left, other.left);
         const vertical = Math.min(box.bottom, other.bottom) - Math.max(box.top, other.top);
-        expect(Math.min(horizontal, vertical), JSON.stringify({width, box, other})).toBeLessThanOrEqual(0.000001);
+        expect(Math.min(horizontal, vertical), JSON.stringify({width, box, other})).toBeLessThanOrEqual(0.001);
       }
     }
     expect(new Set(layout.boxes.map(box => box.left)).size).toBe(1);
