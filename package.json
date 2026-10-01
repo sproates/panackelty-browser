@@ -5,9 +5,15 @@
   "scripts": {
     "setup": "npm ci --ignore-scripts --no-audit --no-fund",
     "build": "node build.mjs",
-    "test": "node --test tests/runtime.test.mjs",
-    "test:browser": "playwright test --config playwright.config.mjs"
+    "test": "node --test tests/runtime.test.mjs tests/release.test.mjs",
+    "test:browser": "playwright test --config playwright.config.mjs",
+    "package": "node package-release.mjs"
   },
-  "dependencies": { "@bjorn3/browser_wasi_shim": "0.4.2" },
-  "devDependencies": { "@playwright/test": "1.63.0" }
+  "dependencies": {
+    "@bjorn3/browser_wasi_shim": "0.4.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  },
+  "version": "0.1.0"
 }

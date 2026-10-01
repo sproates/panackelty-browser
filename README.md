@@ -23,3 +23,24 @@ npm run test:browser
 ```
 
 Generated assets are content-addressed and are not committed.
+
+## Website artifact publication
+
+After a successful `main` build, runtime tests and Chromium/Firefox/WebKit
+tests, Check packages the exact tested `build/playground` tree and publishes
+`playground.tar.gz` plus `SHA256SUMS` under the browser package version tag
+(initially `v0.1.0`). Pull requests exercise packaging but never publish releases.
+The release job has write access; browser builds and tests have read access only.
+
+The main Panackelty repository owns the website, coverage and `/playground/`
+deployment. It consumes this archive at a reviewed tag and SHA-256, rather than
+rebuilding browser code or implicitly following this repository's `main`.
+Updates need a deliberate website dependency-pin PR. That final consumption
+step is separate from publishing this artifact.
+
+Run `npm run package` after the tests to create the archive locally. Packaging
+normalizes timestamps and owners; build provenance excludes installation paths.
+Bump the version in `package.json` and `package-lock.json` whenever published
+artifact bytes change. A rerun accepts matching existing assets, recovers an
+incomplete draft, and refuses to overwrite different bytes at an existing tag.
+No website deployment occurs from this repository.

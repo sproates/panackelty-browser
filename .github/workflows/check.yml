@@ -5,6 +5,9 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: browser-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   browser:
     runs-on: ubuntu-24.04
@@ -32,3 +35,32 @@ jobs:
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:browser
+      - name: Package the validated browser artifact
+        run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-release
+          path: build/release/
+          if-no-files-found: error
+
+  publish:
+    needs: browser
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v6
+        with:
+          name: browser-release
+          path: build/release
+      - name: Publish an immutable browser version
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const publish = require('./publish-release.cjs');
+            const {version} = require('./package.json');
+            await publish(github, context, 'build/release', version);
