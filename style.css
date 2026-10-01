@@ -58,3 +58,13 @@
   .runtime-card { padding: 20px; }
   .program-flow ol { padding-left: 5px; }
 }
+
+.build-architecture { margin-top: 30px; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.build-architecture h3 { margin-top: 0; }
+.build-architecture > p { max-width: 850px; color: var(--muted); }
+.build-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; margin: 22px 0; }
+.build-flow span { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); }
+.build-flow strong, .build-flow small { display: block; }
+.build-flow small { margin-top: 5px; color: var(--muted); }
+.build-flow b { color: var(--signal); font-size: 1.4rem; }
+@media (max-width: 800px) { .build-flow { grid-template-columns: 1fr; } .build-flow b { transform: rotate(90deg); justify-self: center; } }

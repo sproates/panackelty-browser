@@ -67,13 +67,24 @@
         <p class="diagram-key">The compiler is itself a Panackelty bytecode program. Both compilation and execution use the same Panackelty VM implementation.</p>
       </figure>
       <p class="execution-note">Compilation and execution happen on your device; your source code is not sent to a server. Each run starts fresh.</p>
+      <section class="build-architecture" aria-labelledby="build-architecture-title">
+        <h3 id="build-architecture-title">How the browser edition is built</h3>
+        <p>The playground is not a JavaScript reimplementation of Panackelty. The core project publishes matched compiler, standard-library and portable VM build inputs; the browser project compiles that VM to WebAssembly and supplies the browser-specific host.</p>
+        <div class="build-flow" role="img" aria-label="Panackelty core publishes a versioned runtime bundle consumed by Panackelty Browser, which produces the playground running in your browser.">
+          <span><strong>Panackelty core</strong><small>compiler · VM · stdlib</small></span><b aria-hidden="true">→</b>
+          <span><strong>Versioned runtime bundle</strong><small>matched, hashed inputs</small></span><b aria-hidden="true">→</b>
+          <span><strong>Panackelty Browser</strong><small>WASM · host · playground</small></span><b aria-hidden="true">→</b>
+          <span><strong>Your browser</strong><small>compile · execute · output</small></span>
+        </div>
+        <p>Browser-specific source and validation live in <a href="https://github.com/sproates/panackelty-browser">panackelty-browser</a>; the language, compiler and canonical VM remain in <a href="https://github.com/sproates/panackelty">Panackelty core</a>.</p>
+      </section>
     </section>
     <details class="limits"><summary>What can I run here?</summary>
       <p>Complete programs using exact numbers, types, pure functions, collections and supported standard-library operations. Compiler errors appear above, with source positions where available.</p>
       <p>Programs cannot access your device files, start processes or use networking. Runtime file writes and typed native host services are unavailable; standard input is empty. This is not a persistent REPL.</p>
       <p>Limits: 32 KiB UTF-8 source and output, a 15-second foreground timeout and 256 MiB of linear memory per VM instance. The browser uses additional memory. Background timers may be delayed; Stop ends the worker.</p>
     </details>
-    <footer><a href="../">Back to Panackelty</a> · <a href="https://github.com/sproates/panackelty/blob/main/SPEC.md">Language reference</a> · <a href="provenance.json">Build inputs</a> · <a href="LICENSE">License</a> · <a href="vendor/LICENSE-MIT">WASI adapter license</a></footer>
+    <footer><a href="../">Back to Panackelty</a> · <a href="https://github.com/sproates/panackelty/blob/main/SPEC.md">Language reference</a> · <a href="https://github.com/sproates/panackelty-browser">Browser source</a> · <a href="provenance.json">Build inputs</a> · <a href="LICENSE">License</a> · <a href="vendor/LICENSE-MIT">WASI adapter license</a></footer>
   </main>
   <script type="module" src="app.mjs"></script>
 </body>
