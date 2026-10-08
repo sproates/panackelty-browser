@@ -53,10 +53,12 @@ test('footer resources use full-width rows on desktop and mobile', async({page})
     expect(new Set(layout.boxes.map(box => box.left)).size).toBe(1);
     expect(new Set(layout.boxes.map(box => box.right)).size).toBe(1);
     expect(new Set(layout.boxes.map(box => box.top)).size).toBe(names.length);
-    await resources.getByRole('link').first().focus();
     for (const link of await resources.getByRole('link').all()) {
+      // WebKit on macOS follows the host Full Keyboard Access preference for
+      // Tab traversal. Verify every link accepts focus without changing that
+      // machine-wide setting.
+      await link.focus();
       await expect(link).toBeFocused();
-      await page.keyboard.press('Tab');
     }
   }
 });

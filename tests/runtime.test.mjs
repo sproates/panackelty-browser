@@ -88,7 +88,11 @@ test('fixed VM corpus retains 131 exact results and 14 declared host rejections'
     assert.equal(r.stdout,fs.readFileSync(path.join(dir,entry.name+'.stdout'),'utf8'),entry.name);
     const expected=fs.readFileSync(path.join(dir,entry.name+'.stderr'),'utf8');
     const declared=/^(BytecodeContractTests-forged_runtime_safety_failures_trap_in_the_oracle|NativeExecutionTests-native_vm_traps_on_forged_dynamic_failures)-[1-7]$/.test(entry.name);
-    if(declared){assert.equal(r.status,1);assert.equal(r.stderr,'error: VM trap: host capability unavailable in browser playground\n');hosts++;}
+    if(declared){
+      assert.equal(r.status,1,entry.name);
+      assert.match(r.stderr,/^error: VM trap: (host capability unavailable in browser playground|filesystem requires Path)\n$/,entry.name);
+      hosts++;
+    }
     else{assert.equal(r.stderr,expected,entry.name);exact++;}
   }
   assert.equal(exact,131);assert.equal(hosts,14);
@@ -123,6 +127,33 @@ test('native public CLI and WASI compiler emit identical bytecode',async()=>{
     assert.equal(compiled.status,0,compiled.stderr);
     assert.deepEqual(Buffer.from(output.data),fs.readFileSync(path.join(dir,'main.bc')));
   }finally{fs.rmSync(dir,{recursive:true});}
+});
+test('namespace imports match native bytecode and run without source files in WASI',async t=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'panack-namespace-wasi-'));
+  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const source='import project/math as math\nmain(): Void { print(math.answer()) }\n';
+  const dependency='pub pure answer(): Nat { 43 }\n';
+  fs.writeFileSync(path.join(dir,'main.panack'),source);
+  fs.writeFileSync(path.join(dir,'math.panack'),dependency);
+  const nativeArtifact=path.join(dir,'main.bc');
+  const native=spawnSync(path.join(root,'panack'),['compile',path.join(dir,'main.panack'),'-o',nativeArtifact],{cwd:root,encoding:'utf8'});
+  assert.equal(native.status,0,native.stderr);
+  const nativeRun=spawnSync(path.join(root,'panack'),['run',nativeArtifact],{cwd:root,encoding:'utf8'});
+  assert.equal(nativeRun.status,0,nativeRun.stderr);assert.equal(nativeRun.stdout,'43\n');
+
+  const artifact=new File([]);
+  const files=new Map([
+    ['compiler.bc',new File(compiler,{readonly:true})],
+    ['main.panack',new File(new TextEncoder().encode(source),{readonly:true})],
+    ['math.panack',new File(new TextEncoder().encode(dependency),{readonly:true})],
+    ['main.bc',artifact],
+    ['stdlib',new Directory(new Map(Object.entries(stdlib).map(([name,text])=>[name,new File(new TextEncoder().encode(text),{readonly:true})])))]
+  ]);
+  const compiled=await execute(module,['run','/compiler.bc','compile','/main.panack','-o','/main.bc'],files,{writable:artifact});
+  assert.equal(compiled.status,0,compiled.stderr);
+  assert.deepEqual(Buffer.from(artifact.data),fs.readFileSync(nativeArtifact));
+  const bytecode=await execute(module,['run','/main.bc'],new Map([['main.bc',new File(artifact.data,{readonly:true})]]));
+  assert.equal(bytecode.status,0,bytecode.stderr);assert.equal(bytecode.stdout,'43\n');
 });
 test('controller cancellation, stale messages, errors and timeout',async()=>{
   const workers=[],events=[];
