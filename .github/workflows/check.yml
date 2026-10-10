@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: sproates/panackelty
-          ref: 7ea353f9c312c348e94190e63ba9ac958aa56cd7
+          ref: 10543db678f7d81f49eb31429a16ea9635909f72
           path: core
           persist-credentials: false
       - name: Materialize pinned core browser-runtime bundle

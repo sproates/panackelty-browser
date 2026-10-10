@@ -51,9 +51,9 @@ test('source diagnostics prevent runtime execution',async()=>{
   assert.equal(r.status,1);assert.match(r.stderr,/\/main.panack:1:/);assert.deepEqual(phases,['Compiling…']);
 });
 test('unsupported host and runtime writes fail explicitly',async()=>{
-  const host=await run('import "stdlib/host"\nmain(): Void { print(host_decode_utf8(utf8_encode("hi"))) }');
+  const host=await run('import stdlib/host::{host_decode_utf8_value}\nmain(): Void { print(host_decode_utf8_value(utf8_encode("hi"))) }');
   assert.equal(host.status,1);assert.match(host.stderr,/host capability unavailable/);
-  const write=await run('main(): Void { write_file("/cannot-write", "data") }');
+  const write=await run('import stdlib/filesystem::{filesystem_write_file_bytes}\nimport stdlib/bytes::{text_encode_utf8}\nmain(): Void { filesystem_write_file_bytes("/cannot-write", text_encode_utf8("data")) }');
   assert.equal(write.status,1);assert.match(write.stderr,/could not write file/);
 });
 test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
@@ -64,7 +64,7 @@ test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
   await assert.rejects(run('main(): Void { while true { print("flood") } }'),/Output exceeds/);
 });
 test('compiler output filesystem has a hard artifact byte bound',async()=>{
-  const source='main(): Void { mut text: Str = "a"; mut i: Nat = 0; while i < 21 { text = text + text; i = i + 1; } write_file("/target", text) }';
+  const source='import stdlib/filesystem::{filesystem_write_file_bytes}\nimport stdlib/bytes::{text_encode_utf8}\nmain(): Void { mut text: Str = "a"; mut i: Nat = 0; while i < 21 { text = text + text; i = i + 1; } filesystem_write_file_bytes("/target", text_encode_utf8(text)) }';
   const program=new File([]);
   const compiled=await execute(module,['run','/compiler.bc','compile','/main.panack','-o','/main.bc'],new Map([
     ['stdlib',new Directory(new Map(Object.entries(stdlib).map(([name,text])=>[name,new File(new TextEncoder().encode(text),{readonly:true})])))],
@@ -172,7 +172,9 @@ test('controller cancellation, stale messages, errors and timeout',async()=>{
 test('core methods share native lookup and generic behaviour without imports', async()=>{
   const main=fs.readFileSync(path.join(root,'tests/functional/cases/core_methods/main.panack'),'utf8');
   const helper=fs.readFileSync(path.join(root,'tests/functional/cases/core_methods/helpers.panack'),'utf8');
-  const result=await run(helper+main.replace('import "helpers.panack"',''));
+  const flattenedMain=main.replace(/^import "helpers\.panack" as helpers\n/m,'').replaceAll('helpers.describe(','describe(');
+  assert.doesNotMatch(flattenedMain,/^import /m);
+  const result=await run(helper+flattenedMain);
   assert.equal(result.status,0,result.stderr);
   assert.equal(result.stdout,fs.readFileSync(path.join(root,'tests/functional/cases/core_methods/expected.stdout'),'utf8'));
   const missing=await compileAndRun(module,compiler,{},'main(): Void { print(1) }');
@@ -196,7 +198,7 @@ test('native TCP is explicitly unavailable in WASI', async()=>{
 
 test('TCP listening is explicitly unavailable in WASI', async()=>{
   const result=await run(`
-    import stdlib/tcp
+    import stdlib/tcp::{TcpServerLimits}
     pure expect(value: Bool): Unit { checked = [0][if value { 0 } else { 1 }]; () }
     async reply(request: Bytes): Result[Bytes,Str] { Ok(request) }
     async main(): Unit {
