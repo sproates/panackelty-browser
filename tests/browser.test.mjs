@@ -53,10 +53,12 @@ test('footer resources use full-width rows on desktop and mobile', async({page})
     expect(new Set(layout.boxes.map(box => box.left)).size).toBe(1);
     expect(new Set(layout.boxes.map(box => box.right)).size).toBe(1);
     expect(new Set(layout.boxes.map(box => box.top)).size).toBe(names.length);
-    await resources.getByRole('link').first().focus();
     for (const link of await resources.getByRole('link').all()) {
+      // WebKit on macOS follows the host Full Keyboard Access preference for
+      // Tab traversal. Verify every link accepts focus without changing that
+      // machine-wide setting.
+      await link.focus();
       await expect(link).toBeFocused();
-      await page.keyboard.press('Tab');
     }
   }
 });
@@ -83,7 +85,7 @@ test('output, input, host and timeout failures leave the UI usable',async({page}
   await page.goto('/playground/');
   await run(page,'main(): Void { while true { print("flood") } }');await expect(page.locator('#output')).toContainText('Output exceeds');
   await run(page,'x'.repeat(32769));await expect(page.locator('#output')).toContainText('Source exceeds');
-  await run(page,'import "stdlib/host"\nmain(): Void { print(host_decode_utf8(utf8_encode("hi"))) }');
+  await run(page,'import stdlib/host::{host_decode_utf8_value}\nmain(): Void { print(host_decode_utf8_value(utf8_encode("hi"))) }');
   await expect(page.locator('#output')).toContainText('host capability unavailable');
   await page.locator('#source').fill('main(): Void { while true {} }');
   await page.getByRole('button',{name:'Run program',exact:true}).click();
@@ -153,10 +155,12 @@ test('a cached deployment reloads a matching new example, worker and library', a
   fs.cpSync(new URL(`assets/${oldVersion}/`, built), next, {recursive:true});
   fs.copyFileSync(new URL('../index.html', import.meta.url), path.join(next, 'index.html'));
   const examplesFile = path.join(next, 'examples.mjs');
-  fs.writeFileSync(examplesFile, fs.readFileSync(examplesFile, 'utf8').replace('print("Hello, browser!")', 'print(cache_revision())'));
+  fs.writeFileSync(examplesFile, fs.readFileSync(examplesFile, 'utf8')
+    .replace('hello: `main(): Void {', 'hello: `import stdlib/bytes::{cache_revision}\nmain(): Void {')
+    .replace('print("Hello, browser!")', 'print(cache_revision())'));
   const libraryFile = path.join(next, 'stdlib.json');
   const library = JSON.parse(fs.readFileSync(libraryFile, 'utf8'));
-  library['core.panack'] += '\npure cache_revision(): Str { "Updated library!" }\n';
+  library['bytes.panack'] += '\npub pure cache_revision(): Str { "Updated library!" }\n';
   fs.writeFileSync(libraryFile, JSON.stringify(library));
   const nextVersion = versionAssets(next);
   let active = previous;

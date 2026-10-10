@@ -47,7 +47,8 @@ pure ticket_total(count: Seats): Int {
 main(): Void {
   seats: Seats = 4
   total = ticket_total(seats)
-  print("Seats: \${seats}")
+  print("Seats:")
+  print(seats)
   print("Ticket total: \${total}")
 }
 `,
@@ -92,11 +93,9 @@ main(): Void {
   print(describe(safe_divide(10, 0)))
 }
 `,
-  order: `type Quantity = Int where value > 0
-
-record Line {
+  order: `record Line {
   name: Str,
-  quantity: Quantity,
+  quantity: Int,
   unit_price: Dec
 }
 
@@ -168,7 +167,7 @@ export const exampleGuides = {
     "title": "Validated domain values",
     "description": "A guarded type gives a business rule a name. Functions accepting Seats state that the count must be between 1 and 8.",
     "edit": "Change the Seats value from 4 to 0 or 9, then run to see the rejected value. Restore 4 to recover.",
-    "expected": "Seats: 4\nTicket total: 60\n"
+    "expected": "Seats:\n4\nTicket total: 60\n"
   },
   "collections": {
     "title": "Filter, transform and sort",
@@ -184,8 +183,8 @@ export const exampleGuides = {
   },
   "order": {
     "title": "A complete order summary",
-    "description": "Combine a guarded quantity, records, an array of order lines, pure calculations and formatted output. Each line keeps its name, quantity and price together.",
-    "edit": "Add another Line to the array, or change a quantity. Set a quantity to 0 to try the domain constraint.",
+    "description": "Combine records, an array of order lines, pure calculations and formatted output. Each line keeps its name, quantity and price together.",
+    "edit": "Add another Line to the array, or change a quantity to see how it changes the totals.",
     "expected": "Order summary\nNotebook x 3: 59.85\nPen x 2: 7.50\nSubtotal: 67.35\nTax: 13.4700\nTotal: 80.8200\n"
   }
 };

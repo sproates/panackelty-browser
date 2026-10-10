@@ -51,9 +51,9 @@ test('source diagnostics prevent runtime execution',async()=>{
   assert.equal(r.status,1);assert.match(r.stderr,/\/main.panack:1:/);assert.deepEqual(phases,['Compiling…']);
 });
 test('unsupported host and runtime writes fail explicitly',async()=>{
-  const host=await run('import "stdlib/host"\nmain(): Void { print(host_decode_utf8(utf8_encode("hi"))) }');
+  const host=await run('import stdlib/host::{host_decode_utf8_value}\nmain(): Void { print(host_decode_utf8_value(utf8_encode("hi"))) }');
   assert.equal(host.status,1);assert.match(host.stderr,/host capability unavailable/);
-  const write=await run('main(): Void { write_file("/cannot-write", "data") }');
+  const write=await run('import stdlib/filesystem::{filesystem_write_file_bytes}\nimport stdlib/bytes::{text_encode_utf8}\nmain(): Void { filesystem_write_file_bytes("/cannot-write", text_encode_utf8("data")) }');
   assert.equal(write.status,1);assert.match(write.stderr,/could not write file/);
 });
 test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
@@ -64,7 +64,7 @@ test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
   await assert.rejects(run('main(): Void { while true { print("flood") } }'),/Output exceeds/);
 });
 test('compiler output filesystem has a hard artifact byte bound',async()=>{
-  const source='main(): Void { mut text: Str = "a"; mut i: Nat = 0; while i < 21 { text = text + text; i = i + 1; } write_file("/target", text) }';
+  const source='import stdlib/filesystem::{filesystem_write_file_bytes}\nimport stdlib/bytes::{text_encode_utf8}\nmain(): Void { mut text: Str = "a"; mut i: Nat = 0; while i < 21 { text = text + text; i = i + 1; } filesystem_write_file_bytes("/target", text_encode_utf8(text)) }';
   const program=new File([]);
   const compiled=await execute(module,['run','/compiler.bc','compile','/main.panack','-o','/main.bc'],new Map([
     ['stdlib',new Directory(new Map(Object.entries(stdlib).map(([name,text])=>[name,new File(new TextEncoder().encode(text),{readonly:true})])))],
@@ -88,7 +88,11 @@ test('fixed VM corpus retains 131 exact results and 14 declared host rejections'
     assert.equal(r.stdout,fs.readFileSync(path.join(dir,entry.name+'.stdout'),'utf8'),entry.name);
     const expected=fs.readFileSync(path.join(dir,entry.name+'.stderr'),'utf8');
     const declared=/^(BytecodeContractTests-forged_runtime_safety_failures_trap_in_the_oracle|NativeExecutionTests-native_vm_traps_on_forged_dynamic_failures)-[1-7]$/.test(entry.name);
-    if(declared){assert.equal(r.status,1);assert.equal(r.stderr,'error: VM trap: host capability unavailable in browser playground\n');hosts++;}
+    if(declared){
+      assert.equal(r.status,1,entry.name);
+      assert.match(r.stderr,/^error: VM trap: (host capability unavailable in browser playground|filesystem requires Path)\n$/,entry.name);
+      hosts++;
+    }
     else{assert.equal(r.stderr,expected,entry.name);exact++;}
   }
   assert.equal(exact,131);assert.equal(hosts,14);
@@ -124,6 +128,33 @@ test('native public CLI and WASI compiler emit identical bytecode',async()=>{
     assert.deepEqual(Buffer.from(output.data),fs.readFileSync(path.join(dir,'main.bc')));
   }finally{fs.rmSync(dir,{recursive:true});}
 });
+test('namespace imports match native bytecode and run without source files in WASI',async t=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'panack-namespace-wasi-'));
+  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const source='import project/math as math\nmain(): Void { print(math.answer()) }\n';
+  const dependency='pub pure answer(): Nat { 43 }\n';
+  fs.writeFileSync(path.join(dir,'main.panack'),source);
+  fs.writeFileSync(path.join(dir,'math.panack'),dependency);
+  const nativeArtifact=path.join(dir,'main.bc');
+  const native=spawnSync(path.join(root,'panack'),['compile',path.join(dir,'main.panack'),'-o',nativeArtifact],{cwd:root,encoding:'utf8'});
+  assert.equal(native.status,0,native.stderr);
+  const nativeRun=spawnSync(path.join(root,'panack'),['run',nativeArtifact],{cwd:root,encoding:'utf8'});
+  assert.equal(nativeRun.status,0,nativeRun.stderr);assert.equal(nativeRun.stdout,'43\n');
+
+  const artifact=new File([]);
+  const files=new Map([
+    ['compiler.bc',new File(compiler,{readonly:true})],
+    ['main.panack',new File(new TextEncoder().encode(source),{readonly:true})],
+    ['math.panack',new File(new TextEncoder().encode(dependency),{readonly:true})],
+    ['main.bc',artifact],
+    ['stdlib',new Directory(new Map(Object.entries(stdlib).map(([name,text])=>[name,new File(new TextEncoder().encode(text),{readonly:true})])))]
+  ]);
+  const compiled=await execute(module,['run','/compiler.bc','compile','/main.panack','-o','/main.bc'],files,{writable:artifact});
+  assert.equal(compiled.status,0,compiled.stderr);
+  assert.deepEqual(Buffer.from(artifact.data),fs.readFileSync(nativeArtifact));
+  const bytecode=await execute(module,['run','/main.bc'],new Map([['main.bc',new File(artifact.data,{readonly:true})]]));
+  assert.equal(bytecode.status,0,bytecode.stderr);assert.equal(bytecode.stdout,'43\n');
+});
 test('controller cancellation, stale messages, errors and timeout',async()=>{
   const workers=[],events=[];
   const p=new Playground(e=>events.push(e),{timeout:10,createWorker:()=>{
@@ -141,7 +172,9 @@ test('controller cancellation, stale messages, errors and timeout',async()=>{
 test('core methods share native lookup and generic behaviour without imports', async()=>{
   const main=fs.readFileSync(path.join(root,'tests/functional/cases/core_methods/main.panack'),'utf8');
   const helper=fs.readFileSync(path.join(root,'tests/functional/cases/core_methods/helpers.panack'),'utf8');
-  const result=await run(helper+main.replace('import "helpers.panack"',''));
+  const flattenedMain=main.replace(/^import "helpers\.panack" as helpers\n/m,'').replaceAll('helpers.describe(','describe(');
+  assert.doesNotMatch(flattenedMain,/^import /m);
+  const result=await run(helper+flattenedMain);
   assert.equal(result.status,0,result.stderr);
   assert.equal(result.stdout,fs.readFileSync(path.join(root,'tests/functional/cases/core_methods/expected.stdout'),'utf8'));
   const missing=await compileAndRun(module,compiler,{},'main(): Void { print(1) }');
@@ -165,7 +198,7 @@ test('native TCP is explicitly unavailable in WASI', async()=>{
 
 test('TCP listening is explicitly unavailable in WASI', async()=>{
   const result=await run(`
-    import stdlib/tcp
+    import stdlib/tcp::{TcpServerLimits}
     pure expect(value: Bool): Unit { checked = [0][if value { 0 } else { 1 }]; () }
     async reply(request: Bytes): Result[Bytes,Str] { Ok(request) }
     async main(): Unit {
