@@ -33,11 +33,16 @@ tests, Check packages the exact tested `build/playground` tree and publishes
 (initially `v0.1.0`). Pull requests exercise packaging but never publish releases.
 The release job has write access; browser builds and tests have read access only.
 
-The main Panackelty repository owns the website, coverage and `/playground/`
-deployment. It consumes this archive at a reviewed tag and SHA-256, rather than
+The [Panackelty website repository](https://github.com/sproates/panackelty-website)
+owns the main site, including the `/playground/` route and its deployment.
+Coverage reports are published independently by
+[Panackelty Coverage](https://github.com/sproates/panackelty-coverage) at
+https://coverage.panackelty.com/; the main site links to those reports.
+
+The website consumes this archive at a reviewed tag and SHA-256, rather than
 rebuilding browser code or implicitly following this repository's `main`.
-Updates need a deliberate website dependency-pin PR. That final consumption
-step is separate from publishing this artifact.
+Updating its pinned playground release needs a deliberate website dependency-pin
+PR. That final consumption step is separate from publishing this artifact.
 
 Run `npm run package` after the tests to create the archive locally. Packaging
 normalizes timestamps and owners; build provenance excludes installation paths.
