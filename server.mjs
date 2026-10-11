@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=process.env.PLAYGROUND_SITE_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)),'build/site');
+const port=Number(process.env.PLAYGROUND_TEST_PORT || 4174);
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.wasm':'application/wasm','.json':'application/json'};
 http.createServer((req,res)=>{
   try{
@@ -14,4 +15,4 @@ http.createServer((req,res)=>{
     res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});
     fs.createReadStream(file).pipe(res);
   }catch{res.writeHead(404).end();}
-}).listen(4174,'127.0.0.1');
+}).listen(port,'127.0.0.1');

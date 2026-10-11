@@ -8,7 +8,7 @@ This repository owns the browser-specific WASI build, host adapter, JavaScript r
 
 CI pins an exact Panackelty core commit and materializes its versioned `browser-runtime-bundle`. The bundle contains matched VM build inputs, compiler seed and standard library with provenance hashes. This repository never follows core `main` implicitly.
 
-The initial migration pins the merged Panackelty core boundary commit `261e0cef080e3ba2e5afcb24eb4467491a106f7f`. Future dependency updates are deliberate and validated by this repository's browser suite.
+The alpha.12 namespace acceptance pins the released Panackelty core commit `0c2b9a0b15b6948e322ac10cc2e61a6dcec00e9e`. The playground includes a runnable namespace-import example. Future dependency updates are deliberate and validated by this repository's browser suite.
 
 ## Build
 
