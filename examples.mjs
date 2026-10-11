@@ -93,6 +93,15 @@ main(): Void {
   print(describe(safe_divide(10, 0)))
 }
 `,
+  namespaces: `import stdlib/bytes as byte_tools
+
+main(): Void {
+  message = "Panackelty"
+  encoded = byte_tools.text_encode_utf8(message)
+  print("UTF-8 byte length:")
+  print(byte_tools.bytes_length(encoded))
+}
+`,
   order: `record Line {
   name: Str,
   quantity: Int,
@@ -180,6 +189,12 @@ export const exampleGuides = {
     "description": "Option represents a possibly missing value; Result represents a calculation that can fail. Pattern matching handles each case explicitly.",
     "edit": "Change safe_divide(10, 0) to safe_divide(10, 2), or change the fallback guest name.",
     "expected": "Hello, Ada\nHello, guest\nAnswer: 42\nCannot divide by zero\n"
+  },
+  "namespaces": {
+    "title": "Namespace imports",
+    "description": "Import a standard-library module under an alias, then call its functions through that namespace.",
+    "edit": "Change Panackelty to another word and run again to see its UTF-8 byte length.",
+    "expected": "UTF-8 byte length:\n10\n"
   },
   "order": {
     "title": "A complete order summary",

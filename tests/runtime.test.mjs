@@ -21,7 +21,7 @@ const run=source=>compileAndRun(module,compiler,stdlib,source);
 test('every website example matches expected output through browser and native public CLI',async t=>{
   const work=fs.mkdtempSync(path.join(os.tmpdir(),'panack-browser-examples-'));
   t.after(()=>fs.rmSync(work,{recursive:true,force:true}));
-  assert.equal(Object.keys(examples).length,9);
+  assert.equal(Object.keys(examples).length,10);
   for(const [name,source] of Object.entries(examples)){
     const result=await run(source);
     assert.equal(result.status,0,name+': '+result.stderr);assert.equal(result.stdout,exampleGuides[name].expected,name);

@@ -104,7 +104,7 @@ test('homepage navigation and every selectable example work at website paths',as
   await page.goto('/');
   await page.getByRole('link',{name:'Try it online',exact:true}).click();
   await expect(page).toHaveURL(/\/playground\/$/);
-  await expect(page.locator('#example option')).toHaveCount(9);
+  await expect(page.locator('#example option')).toHaveCount(10);
   for(const [name,guide] of Object.entries(exampleGuides)){
     await page.locator('#example').selectOption(name);
     await page.getByRole('button',{name:'Load example',exact:true}).click();
