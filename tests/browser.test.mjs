@@ -85,7 +85,7 @@ test('output, input, host and timeout failures leave the UI usable',async({page}
   await page.goto('/playground/');
   await run(page,'main(): Void { while true { print("flood") } }');await expect(page.locator('#output')).toContainText('Output exceeds');
   await run(page,'x'.repeat(32769));await expect(page.locator('#output')).toContainText('Source exceeds');
-  await run(page,'import stdlib/host::{host_decode_utf8_value}\nmain(): Void { print(host_decode_utf8_value(utf8_encode("hi"))) }');
+  await run(page,'import stdlib/host as host\nimport stdlib/text as text\nmain(): Void { host.decode_utf8(text.encode_utf8("hi")); }');
   await expect(page.locator('#output')).toContainText('host capability unavailable');
   await page.locator('#source').fill('main(): Void { while true {} }');
   await page.getByRole('button',{name:'Run program',exact:true}).click();
