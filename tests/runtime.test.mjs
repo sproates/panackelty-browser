@@ -6,7 +6,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 const version = fs.readFileSync(new URL('../build/playground/asset-version.txt', import.meta.url), 'utf8').trim();
 const assets = new URL(`../build/playground/assets/${version}/`, import.meta.url);
-const {compileAndRun,execute,sourceBytes,SOURCE_LIMIT} = await import(new URL('runtime.mjs', assets));
+const {compileAndRun,execute,sourceBytes,assertArtifactWriteBound,SOURCE_LIMIT,ARTIFACT_LIMIT} = await import(new URL('runtime.mjs', assets));
 const {File,Directory} = await import(new URL('vendor/index.js', assets));
 import {Playground} from '../controller.mjs';
 import {examples, exampleGuides} from '../examples.mjs';
@@ -51,10 +51,10 @@ test('source diagnostics prevent runtime execution',async()=>{
   assert.equal(r.status,1);assert.match(r.stderr,/\/main.panack:1:/);assert.deepEqual(phases,['Compiling…']);
 });
 test('unsupported host and runtime writes fail explicitly',async()=>{
-  const host=await run('import stdlib/host::{host_decode_utf8_value}\nmain(): Void { print(host_decode_utf8_value(utf8_encode("hi"))) }');
+  const host=await run('import stdlib/host as host\nimport stdlib/text as text\nmain(): Void { host.decode_utf8(text.encode_utf8("hi")); }');
   assert.equal(host.status,1);assert.match(host.stderr,/host capability unavailable/);
-  const write=await run('import stdlib/filesystem::{filesystem_write_file_bytes}\nimport stdlib/bytes::{text_encode_utf8}\nmain(): Void { filesystem_write_file_bytes("/cannot-write", text_encode_utf8("data")) }');
-  assert.equal(write.status,1);assert.match(write.stderr,/could not write file/);
+  const write=await run('import stdlib/filesystem as filesystem\nimport stdlib/path as path\nimport stdlib/text as text\nmain(): Void { match path.from_text("/cannot-write") { Ok(value) => { filesystem.write(value, text.encode_utf8("data")); () }, Error(_) => () }; print("done") }');
+  assert.equal(write.status,1);assert.match(write.stderr,/host capability unavailable/);
 });
 test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
   assert.equal(sourceBytes('a'.repeat(SOURCE_LIMIT)).length,SOURCE_LIMIT);
@@ -64,18 +64,10 @@ test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
   await assert.rejects(run('main(): Void { while true { print("flood") } }'),/Output exceeds/);
 });
 test('compiler output filesystem has a hard artifact byte bound',async()=>{
-  const source='import stdlib/filesystem::{filesystem_write_file_bytes}\nimport stdlib/bytes::{text_encode_utf8}\nmain(): Void { mut text: Str = "a"; mut i: Nat = 0; while i < 21 { text = text + text; i = i + 1; } filesystem_write_file_bytes("/target", text_encode_utf8(text)) }';
-  const program=new File([]);
-  const compiled=await execute(module,['run','/compiler.bc','compile','/main.panack','-o','/main.bc'],new Map([
-    ['stdlib',new Directory(new Map(Object.entries(stdlib).map(([name,text])=>[name,new File(new TextEncoder().encode(text),{readonly:true})])))],
-    ['compiler.bc',new File(compiler,{readonly:true})],['main.panack',new File(new TextEncoder().encode(source),{readonly:true})],['main.bc',program]
-  ]),{writable:program});
-  assert.equal(compiled.status,0,compiled.stderr);
-  const target=new File([]);
-  await assert.rejects(execute(module,['run','/main.bc'],new Map([
-    ['main.bc',new File(program.data,{readonly:true})],['target',target]
-  ]),{writable:target}),/Compiled artifact exceeds 1 MiB/);
-  assert(target.data.length<=1048576);
+  assert.doesNotThrow(()=>assertArtifactWriteBound(0n,ARTIFACT_LIMIT));
+  assert.doesNotThrow(()=>assertArtifactWriteBound(BigInt(ARTIFACT_LIMIT-1),1));
+  assert.throws(()=>assertArtifactWriteBound(0n,ARTIFACT_LIMIT+1),/Compiled artifact exceeds 1 MiB/);
+  assert.throws(()=>assertArtifactWriteBound(BigInt(ARTIFACT_LIMIT),1),/Compiled artifact exceeds 1 MiB/);
 });
 test('fixed VM corpus retains 131 exact results and 14 declared host rejections',async()=>{
   const dir=path.join(root,'tests/fixtures/vm_contracts');

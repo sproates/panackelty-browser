@@ -8,7 +8,7 @@ This repository owns the browser-specific WASI build, host adapter, JavaScript r
 
 CI pins an exact Panackelty core commit and materializes its versioned `browser-runtime-bundle`. The bundle contains matched VM build inputs, compiler seed and standard library with provenance hashes. This repository never follows core `main` implicitly.
 
-The alpha.12 namespace acceptance pins the released Panackelty core commit `0c2b9a0b15b6948e322ac10cc2e61a6dcec00e9e`. The playground includes a runnable namespace-import example. Future dependency updates are deliberate and validated by this repository's browser suite.
+The alpha.13 namespace/local-package acceptance pins core `2ad60b3eb11f7ad422487b2ca9c97a7cf5ad0a96`, which adds the portable HTTP transport bundle repair to the validated alpha.13 source tree. The published native release remains `a2ac16dfb7f7667b8531ddb9e821a35b13644fd5`; its immutable browser dependency archive predates this repair. The playground includes a runnable namespace-import example. Future dependency updates are deliberate and validated by this repository's browser suite.
 
 ## Build
 
@@ -44,8 +44,8 @@ rebuilding browser code or implicitly following this repository's `main`.
 Updating its pinned playground release needs a deliberate website dependency-pin
 PR. That final consumption step is separate from publishing this artifact.
 
-Run `npm run package` after the tests to create the archive locally. Packaging
-normalizes timestamps and owners; build provenance excludes installation paths.
+Run `npm run package` after the tests to create the archive locally with GNU tar
+on PATH (as in Linux CI). Packaging normalizes timestamps and owners; build provenance excludes installation paths.
 Bump the version in `package.json` and `package-lock.json` whenever published
 artifact bytes change. A rerun accepts matching existing assets, recovers an
 incomplete draft, and refuses to overwrite different bytes at an existing tag.

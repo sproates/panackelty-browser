@@ -93,13 +93,14 @@ main(): Void {
   print(describe(safe_divide(10, 0)))
 }
 `,
-  namespaces: `import stdlib/bytes as byte_tools
+  namespaces: `import stdlib/text as text_tools
+import stdlib/bytes as byte_tools
 
 main(): Void {
   message = "Panackelty"
-  encoded = byte_tools.text_encode_utf8(message)
+  encoded = text_tools.encode_utf8(message)
   print("UTF-8 byte length:")
-  print(byte_tools.bytes_length(encoded))
+  print(byte_tools.length(encoded))
 }
 `,
   order: `record Line {
@@ -192,7 +193,7 @@ export const exampleGuides = {
   },
   "namespaces": {
     "title": "Namespace imports",
-    "description": "Import a standard-library module under an alias, then call its functions through that namespace.",
+    "description": "Import the text and byte modules under aliases, then call their functions through those namespaces.",
     "edit": "Change Panackelty to another word and run again to see its UTF-8 byte length.",
     "expected": "UTF-8 byte length:\n10\n"
   },

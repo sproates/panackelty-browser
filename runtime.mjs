@@ -5,6 +5,10 @@ export const OUTPUT_LIMIT = 32768;
 export const ARTIFACT_LIMIT = 1048576;
 const encoder = new TextEncoder();
 
+export function assertArtifactWriteBound(position, length) {
+  if (position + BigInt(length) > BigInt(ARTIFACT_LIMIT)) throw new Error('Compiled artifact exceeds 1 MiB.');
+}
+
 export function sourceBytes(source) {
   if (typeof source !== 'string' || source.length > SOURCE_LIMIT) throw new Error('Source exceeds 32 KiB.');
   const bytes = encoder.encode(source);
@@ -33,7 +37,7 @@ export async function execute(module, args, files, {writable = null, outputLimit
       const view = new DataView(host.inst.exports.memory.buffer);
       let length = 0;
       for (let i = 0; i < count; i++) length += view.getUint32(iovs+i*8+4, true);
-      if (file.file_pos + BigInt(length) > BigInt(ARTIFACT_LIMIT)) throw new Error('Compiled artifact exceeds 1 MiB.');
+      assertArtifactWriteBound(file.file_pos, length);
     }
     return write(fd, iovs, count, written);
   };
