@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: sproates/panackelty
-          ref: e4caa927d355c516b403e92992575ded2511eeb0
+          ref: 2ad60b3eb11f7ad422487b2ca9c97a7cf5ad0a96
           path: core
           persist-credentials: false
       - name: Materialize pinned core browser-runtime bundle
@@ -46,6 +46,8 @@ jobs:
           npm run build
           cmp "$RUNNER_TEMP/first-version.txt" build/playground/asset-version.txt
           cmp "$RUNNER_TEMP/first.wasm" build/playground/assets/*/vm.wasm
+      - name: Install native HTTP client dependency
+        run: sudo apt-get update && sudo apt-get install --yes libcurl4-openssl-dev
       - name: Build native oracle and run all contracts
         run: make -C core native && npm test
       - name: Restore matching browser engines
