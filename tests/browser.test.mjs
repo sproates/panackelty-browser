@@ -30,7 +30,7 @@ test('footer resources use full-width rows on desktop and mobile', async({page})
       };
     });
     expect(layout.destinations).toEqual([
-      '../', 'https://github.com/sproates/panackelty/blob/main/SPEC.md',
+      '../', 'https://github.com/sproates/panackelty/blob/539cda1d11bb505761668fc17cbeb03fff4ee84d/docs/reference/SPEC.md',
       'https://github.com/sproates/panackelty-browser',
       expect.stringMatching(/^assets\/[a-f0-9]{64}\/provenance\.json$/),
       expect.stringMatching(/^assets\/[a-f0-9]{64}\/LICENSE$/),
@@ -68,7 +68,7 @@ test('real worker compiles stdlib and exact values, reports source errors, rende
   await expect(page.locator('#status')).toHaveText('Finished');
   await expect(page.locator('#output')).toHaveText('Hello, browser!\n');
   await run(page,'main(): Void { x: Nat = "bad"; print(x) }');
-  await expect(page.locator('#output')).toContainText('cannot assign Str to Nat');
+  await expect(page.locator('#output')).toContainText('binding x is Str, expected Nat');
   await run(page,'main(): Void { print("<b>λ🙂</b>"); print((1/8).dec()) }');
   await expect(page.locator('#output')).toHaveText('<b>λ🙂</b>\n0.125\n');
   await expect(page.locator('#output b')).toHaveCount(0);
@@ -85,7 +85,7 @@ test('output, input, host and timeout failures leave the UI usable',async({page}
   await page.goto('/playground/');
   await run(page,'main(): Void { while true { print("flood") } }');await expect(page.locator('#output')).toContainText('Output exceeds');
   await run(page,'x'.repeat(32769));await expect(page.locator('#output')).toContainText('Source exceeds');
-  await run(page,'import stdlib/host as host\nimport stdlib/text as text\nmain(): Void { host.decode_utf8(text.encode_utf8("hi")); }');
+  await run(page,'import stdlib/host as host\nmain(): Void { host.decode_utf8("hi".encode_utf8()); }');
   await expect(page.locator('#output')).toContainText('host capability unavailable');
   await page.locator('#source').fill('main(): Void { while true {} }');
   await page.getByRole('button',{name:'Run program',exact:true}).click();
@@ -134,7 +134,7 @@ test('core types and chained methods need no imports',async({page})=>{
   await run(page,'pure less(a: Nat,b: Nat): Bool { a < b } main(): Void { value: Result[Nat,Str] = Ok(42); print(value); print([3,1,2].sort_by(@less).first()); print("hello.panack".ends_with(".panack")); print("42".parse_nat()) }');
   await expect(page.locator('#output')).toHaveText('Ok(42)\nSome(1)\ntrue\n42\n');
   await run(page,'main(): Void { print(1.ends_with("x")) }');
-  await expect(page.locator('#output')).toContainText('expected Str');
+  await expect(page.locator('#output')).toContainText('unknown owned method Nat.ends_with');
 });
 
 test('a cached deployment reloads a matching new example, worker and library', async({page}) => {
@@ -201,4 +201,12 @@ test('a cached deployment reloads a matching new example, worker and library', a
     await new Promise(resolve => server.close(resolve));
     fs.rmSync(work, {recursive:true, force:true});
   }
+});
+
+test('owned methods keep distinct receivers and reject the temporary arrow syntax', async({page})=>{
+  await page.goto('/playground/');
+  await run(page,'record Fruit { value: Nat } impl Fruit { pure apple(): Nat { self.value } pure banana(): Nat { self.value + 1 } } main(): Void { a = Fruit(10); b = Fruit(20); print(a.apple()); print(a.banana()); print(b.apple()); print(b.banana()) }');
+  await expect(page.locator('#output')).toHaveText('10\n11\n20\n21\n');
+  await run(page,'main(): Void { print("abc"->len()) }');
+  await expect(page.locator('#output')).toContainText('arrow receiver calls are not supported; use dot syntax');
 });

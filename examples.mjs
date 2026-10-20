@@ -76,7 +76,7 @@ main(): Void {
 
 pure safe_divide(n: Nat, d: Nat): Result[Nat,Str] {
   if d == 0 { Error("Cannot divide by zero") }
-  else { Ok(quotient(n, d)) }
+  else { Ok(n.divide(d)) }
 }
 
 pure describe(result: Result[Nat,Str]): Str {
@@ -93,14 +93,13 @@ main(): Void {
   print(describe(safe_divide(10, 0)))
 }
 `,
-  namespaces: `import stdlib/text as text_tools
-import stdlib/bytes as byte_tools
+  namespaces: `import stdlib/bytes as byte_tools
 
 main(): Void {
   message = "Panackelty"
-  encoded = text_tools.encode_utf8(message)
+  encoded = byte_tools.empty().join(message.encode_utf8())
   print("UTF-8 byte length:")
-  print(byte_tools.length(encoded))
+  print(encoded.length())
 }
 `,
   order: `record Line {
@@ -193,7 +192,7 @@ export const exampleGuides = {
   },
   "namespaces": {
     "title": "Namespace imports",
-    "description": "Import the text and byte modules under aliases, then call their functions through those namespaces.",
+    "description": "Call the byte module’s empty constructor through a namespace, then use owned methods to encode, combine and measure bytes.",
     "edit": "Change Panackelty to another word and run again to see its UTF-8 byte length.",
     "expected": "UTF-8 byte length:\n10\n"
   },
