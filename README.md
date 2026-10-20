@@ -8,7 +8,16 @@ This repository owns the browser-specific WASI build, host adapter, JavaScript r
 
 CI pins an exact Panackelty core commit and materializes its versioned `browser-runtime-bundle`. The bundle contains matched VM build inputs, compiler seed and standard library with provenance hashes. This repository never follows core `main` implicitly.
 
-The alpha.13 namespace/local-package acceptance pins core `2ad60b3eb11f7ad422487b2ca9c97a7cf5ad0a96`, which adds the portable HTTP transport bundle repair to the validated alpha.13 source tree. The published native release remains `a2ac16dfb7f7667b8531ddb9e821a35b13644fd5`; its immutable browser dependency archive predates this repair. The playground includes a runnable namespace-import example. Future dependency updates are deliberate and validated by this repository's browser suite.
+The alpha.14 method-dispatch candidate pins core
+`539cda1d11bb505761668fc17cbeb03fff4ee84d` (P14). Compiler, VM and library inputs
+must move together. Receiver calls use type-owned dot dispatch; removed global
+receiver helpers and temporary arrow calls are rejected. The namespace example
+uses the retained bytes constructor and owned methods.
+
+Browser artifact `0.2.0` is an alpha.14 consumer candidate, not a native
+alpha.14 release or website promotion. The website remains on its separately
+reviewed alpha.13 artifact until its dependency-pin update. Actual HTTP networking
+is unavailable in this browser profile.
 
 ## Build
 
@@ -53,9 +62,9 @@ No website deployment occurs from this repository.
 
 ## Validation ownership
 
-This repository owns the complete suite migrated from core: 15 runtime tests
+This repository owns the complete suite migrated from core: the runtime tests
 (including all 145 VM corpus cases: 131 exact results and 14 explicit host
-rejections), the asset identity test, release safety tests, and eight browser
+rejections), the asset identity test, release safety tests, and nine browser
 scenarios in each of Chromium, Firefox and WebKit. These cover every example,
 native CLI output and bytecode equivalence, bounds, cancellation, timeout,
 diagnostics, host restrictions, layout, navigation and real HTTP cache upgrades.
@@ -132,3 +141,18 @@ rewritten in place under an existing hash. Pages can still cache the entry HTML;
 this does not force an already open tab to update or preserve every old asset set.
 An old page whose dependencies are no longer available fails visibly and needs a
 reload after the entry document refreshes. No service worker is installed.
+
+
+## Owned-method acceptance
+
+The candidate runtime suite runs the twelve maintained owned-dispatch fixtures
+from the exact pinned core revision, preserving imports, re-exports, generic
+owners, callable/effect contracts and Server/Map coexistence. Each runs from
+compiled bytecode with source files absent. Rejection tests cover receiver
+arrows, removed globals and missing-method fallback. The original Fruit result
+is exactly `10`, `11`, `20`, `21`, also asserted in all three real engines.
+Native CLI oracle calls use the maintained `bin/panack` entry point.
+
+The full runtime/assets/publication suite has 23 tests. The 145 fixed VM cases
+retain their 131 exact results and 14 explicit browser host rejections. No timeout,
+source/output/artifact limit or expected safety outcome is relaxed.

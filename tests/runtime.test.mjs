@@ -26,7 +26,7 @@ test('every website example matches expected output through browser and native p
     const result=await run(source);
     assert.equal(result.status,0,name+': '+result.stderr);assert.equal(result.stdout,exampleGuides[name].expected,name);
     const file=path.join(work,name+'.panack');fs.writeFileSync(file,source);
-    const native=spawnSync(path.join(root,'panack'),['run',file],{cwd:root,encoding:'utf8'});
+    const native=spawnSync(path.join(root,'bin/panack'),['run',file],{cwd:root,encoding:'utf8'});
     assert.equal(native.status,0,native.stderr);assert.equal(native.stdout,exampleGuides[name].expected,name);
   }
 });
@@ -51,9 +51,9 @@ test('source diagnostics prevent runtime execution',async()=>{
   assert.equal(r.status,1);assert.match(r.stderr,/\/main.panack:1:/);assert.deepEqual(phases,['Compiling…']);
 });
 test('unsupported host and runtime writes fail explicitly',async()=>{
-  const host=await run('import stdlib/host as host\nimport stdlib/text as text\nmain(): Void { host.decode_utf8(text.encode_utf8("hi")); }');
+  const host=await run('import stdlib/host as host\nmain(): Void { host.decode_utf8("hi".encode_utf8()); }');
   assert.equal(host.status,1);assert.match(host.stderr,/host capability unavailable/);
-  const write=await run('import stdlib/filesystem as filesystem\nimport stdlib/path as path\nimport stdlib/text as text\nmain(): Void { match path.from_text("/cannot-write") { Ok(value) => { filesystem.write(value, text.encode_utf8("data")); () }, Error(_) => () }; print("done") }');
+  const write=await run('import stdlib/filesystem as filesystem\nimport stdlib/path as path\nmain(): Void { match path.from_text("/cannot-write") { Ok(value) => { filesystem.write(value, "data".encode_utf8()); () }, Error(_) => () }; print("done") }');
   assert.equal(write.status,1);assert.match(write.stderr,/host capability unavailable/);
 });
 test('source bound measures UTF-8 bytes, output flood aborts',async()=>{
@@ -107,9 +107,9 @@ test('native public CLI and WASI compiler emit identical bytecode',async()=>{
   try{
     const source='main(): Void { print((1/3 * 30).nat()); print("λ🙂") }\n';
     fs.writeFileSync(path.join(dir,'main.panack'),source);
-    const result=spawnSync('./panack',['compile',path.join(dir,'main.panack'),'-o',path.join(dir,'main.bc')],{cwd:root,encoding:'utf8'});
+    const result=spawnSync('./bin/panack',['compile',path.join(dir,'main.panack'),'-o',path.join(dir,'main.bc')],{cwd:root,encoding:'utf8'});
     assert.equal(result.status,0,result.stderr);
-    const cli=spawnSync('./panack',['run',path.join(dir,'main.panack')],{cwd:root,encoding:'utf8'});
+    const cli=spawnSync('./bin/panack',['run',path.join(dir,'main.panack')],{cwd:root,encoding:'utf8'});
     assert.equal(cli.status,0,cli.stderr);assert.equal(cli.stdout,'10\nλ🙂\n');
     const output=new File([]);
     const compiled=await execute(module,['run','/compiler.bc','compile','/main.panack','-o','/main.bc'],new Map([
@@ -128,9 +128,9 @@ test('namespace imports match native bytecode and run without source files in WA
   fs.writeFileSync(path.join(dir,'main.panack'),source);
   fs.writeFileSync(path.join(dir,'math.panack'),dependency);
   const nativeArtifact=path.join(dir,'main.bc');
-  const native=spawnSync(path.join(root,'panack'),['compile',path.join(dir,'main.panack'),'-o',nativeArtifact],{cwd:root,encoding:'utf8'});
+  const native=spawnSync(path.join(root,'bin/panack'),['compile',path.join(dir,'main.panack'),'-o',nativeArtifact],{cwd:root,encoding:'utf8'});
   assert.equal(native.status,0,native.stderr);
-  const nativeRun=spawnSync(path.join(root,'panack'),['run',nativeArtifact],{cwd:root,encoding:'utf8'});
+  const nativeRun=spawnSync(path.join(root,'bin/panack'),['run',nativeArtifact],{cwd:root,encoding:'utf8'});
   assert.equal(nativeRun.status,0,nativeRun.stderr);assert.equal(nativeRun.stdout,'43\n');
 
   const artifact=new File([]);
@@ -176,9 +176,10 @@ test('core methods share native lookup and generic behaviour without imports', a
 
 test('native TCP is explicitly unavailable in WASI', async()=>{
   const result=await run(`
+    import stdlib/tcp as tcp
     pure expect(value: Bool): Unit { checked = [0][if value { 0 } else { 1 }]; () }
     async main(): Unit {
-      match await tcp_exchange("127.0.0.1", 9000, bytes(), 32, 10) {
+      match await tcp.exchange("127.0.0.1", 9000, bytes(), 32, 10) {
         Ok(data) => expect(false),
         Error(problem) => expect(problem == "TCP is unavailable on this host")
       }
@@ -191,11 +192,12 @@ test('native TCP is explicitly unavailable in WASI', async()=>{
 test('TCP listening is explicitly unavailable in WASI', async()=>{
   const result=await run(`
     import stdlib/tcp::{TcpServerLimits}
+    import stdlib/tcp as tcp
     pure expect(value: Bool): Unit { checked = [0][if value { 0 } else { 1 }]; () }
     async reply(request: Bytes): Result[Bytes,Str] { Ok(request) }
     async main(): Unit {
       limits = TcpServerLimits(1, 1, 32, 32, 10, 10, 10)
-      match await tcp_serve("127.0.0.1", 9000, @reply, limits) {
+      match await tcp.serve("127.0.0.1", 9000, @reply, limits) {
         Ok(reports) => expect(false),
         Error(problem) => expect(problem == "TCP server is unavailable on this host")
       }
@@ -203,4 +205,53 @@ test('TCP listening is explicitly unavailable in WASI', async()=>{
     }`);
   assert.equal(result.status,0,result.stderr);
   assert.equal(result.stdout,'');
+});
+
+// Use the maintained acceptance programs without flattening their imports or
+// rewriting their syntax. Only the compiled artifact survives into execution.
+test('owned dispatch fixtures retain imports, generics, effects and Server/Map behavior in WASI', async()=>{
+  const names=['owned_method_dispatch','owned_imports','owned_generic_methods',
+    'owned_intrinsics','owned_callbacks','owned_async_handlers','owned_core_methods',
+    'owned_server_map','owned_server_map_alias','owned_server_map_facade',
+    'owned_server_map_identity','owned_server_map_namespace'];
+  const cases=path.join(root,'tests/functional/cases');
+  const directory=dir=>new Directory(new Map(fs.readdirSync(dir,{withFileTypes:true})
+    .map(entry=>[entry.name,entry.isDirectory()?directory(path.join(dir,entry.name)):
+      new File(fs.readFileSync(path.join(dir,entry.name)),{readonly:true})])));
+  for(const name of names){
+    const dir=path.join(cases,name);
+    const entry=fs.existsSync(path.join(dir,'source.path'))?
+      fs.readFileSync(path.join(dir,'source.path'),'utf8').trim().replace('tests/functional/cases/',''):
+      `${name}/main.panack`;
+    const artifact=new File([]);
+    const files=new Map([
+      ['compiler.bc',new File(compiler,{readonly:true})],['result.bc',artifact],
+      ['fixtures',new Directory(new Map(names.map(n=>[n,directory(path.join(cases,n))])))],
+      ['stdlib',new Directory(new Map(Object.entries(stdlib).map(([n,s])=>
+        [n,new File(new TextEncoder().encode(s),{readonly:true})])))]
+    ]);
+    const compiled=await execute(module,['run','/compiler.bc','compile',`/fixtures/${entry}`,
+      '-o','/result.bc'],files,{writable:artifact});
+    assert.equal(compiled.status,0,name+': '+compiled.stderr);
+    const result=await execute(module,['run','/result.bc'],
+      new Map([['result.bc',new File(artifact.data,{readonly:true})]]));
+    assert.equal(result.status,0,name+': '+result.stderr);
+    assert.equal(result.stdout,fs.readFileSync(path.join(dir,'expected.stdout'),'utf8'),name);
+    assert.equal(result.stderr,'',name);
+  }
+});
+
+test('dot-only compiler rejects arrows, removed globals and global fallback in WASI', async()=>{
+  for(const [source,diagnostic] of [
+    ['main(): Void { print("abc"->len()) }',/arrow receiver calls are not supported/],
+    ['main(): Void { print(quotient(4, 2)) }',/removed global primitive/],
+    ['record Fruit { value: Nat } pure apple(f: Fruit): Nat { f.value } main(): Void { print(Fruit(10).apple()) }',/owned method/]
+  ]){
+    const result=await run(source);
+    assert.equal(result.status,1);assert.match(result.stderr,diagnostic);
+    assert.equal(result.stdout,'');
+  }
+  const fruit=await run('record Fruit { value: Nat } impl Fruit { pure apple(): Nat { self.value } pure banana(): Nat { self.value + 1 } } main(): Void { a = Fruit(10); b = Fruit(20); print(a.apple()); print(a.banana()); print(b.apple()); print(b.banana()) }');
+  assert.equal(fruit.status,0,fruit.stderr);
+  assert.equal(fruit.stdout,'10\n11\n20\n21\n');
 });
