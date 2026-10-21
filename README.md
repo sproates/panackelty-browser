@@ -9,7 +9,7 @@ This repository owns the browser-specific WASI build, host adapter, JavaScript r
 CI pins an exact Panackelty core commit and materializes its versioned `browser-runtime-bundle`. The bundle contains matched VM build inputs, compiler seed and standard library with provenance hashes. This repository never follows core `main` implicitly.
 
 The alpha.14 browser build pins core
-`4b8ecbd2faa5f62dfcb21f97c0f8587bc1d1bf58`. Compiler, VM and library inputs
+`3432513b979f1fe1bc57d2bb70ccaa9a62649fd6`. Compiler, VM and library inputs
 must move together. Receiver calls use type-owned dot dispatch; removed global
 receiver helpers and temporary arrow calls are rejected. The namespace example
 uses the retained bytes constructor and owned methods.
