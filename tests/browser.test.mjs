@@ -30,7 +30,7 @@ test('footer resources use full-width rows on desktop and mobile', async({page})
       };
     });
     expect(layout.destinations).toEqual([
-      '../', 'https://github.com/sproates/panackelty/blob/539cda1d11bb505761668fc17cbeb03fff4ee84d/docs/reference/SPEC.md',
+      '../', 'https://github.com/sproates/panackelty/blob/3432513b979f1fe1bc57d2bb70ccaa9a62649fd6/docs/reference/SPEC.md',
       'https://github.com/sproates/panackelty-browser',
       expect.stringMatching(/^assets\/[a-f0-9]{64}\/provenance\.json$/),
       expect.stringMatching(/^assets\/[a-f0-9]{64}\/LICENSE$/),
