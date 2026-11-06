@@ -50,8 +50,13 @@ jobs:
           npm run build
           cmp "$RUNNER_TEMP/first-version.txt" build/playground/asset-version.txt
           cmp "$RUNNER_TEMP/first.wasm" build/playground/assets/*/vm.wasm
-      - name: Install native HTTP client dependency
-        run: sudo apt-get update && sudo apt-get install --yes libcurl4-openssl-dev libssl-dev zlib1g-dev
+      - name: Install native test dependencies
+        run: |
+          # The Azure mirror stalled while downloading Playwright dependencies.
+          # Use Ubuntu's main mirror; normal signed-package verification remains on.
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          sudo apt-get update
+          sudo apt-get install --yes libcurl4-openssl-dev libssl-dev zlib1g-dev
       - name: Build native oracle and run all contracts
         run: make -C core native && npm test
       - name: Restore matching browser engines
