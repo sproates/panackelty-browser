@@ -68,3 +68,39 @@ Value *host_capability_call(VM *vm, const char *name, Value **arguments)
     vm->error = "VM trap: host capability unavailable in browser playground";
     return NULL;
 }
+
+/* Match the core's unsupported-platform contract for native-only adapters.
+ * No handles can be created in this profile, so cleanup has nothing to release. */
+static Value *browser_unsupported(const char *operation)
+{
+    char *names[] = {"operation", "code", "native_code"};
+    Value *fields[] = {
+        value_data(V_STR, (const uint8_t *)operation, strlen(operation)),
+        value_data(V_STR, (const uint8_t *)"unsupported", 11), value_size(0)
+    };
+    Value *record = fields[0] && fields[1] && fields[2]
+        ? named_value(V_RECORD, "HostError", names, fields, 3) : NULL;
+    for (size_t i = 0; i < 3; i++) release(fields[i]);
+    return host_variant("Error", record);
+}
+
+Value *digest_call(VM *vm, const char *name, Value **arguments)
+{
+    (void)vm; (void)arguments;
+    return browser_unsupported(name);
+}
+void digest_destroy(VM *vm) { (void)vm; }
+
+Value *gzip_stream_call(VM *vm, const char *name, Value **arguments)
+{
+    (void)vm; (void)arguments;
+    return browser_unsupported(name);
+}
+void gzip_stream_destroy(VM *vm) { (void)vm; }
+
+Value *filesystem_stage_call(VM *vm, const char *name, Value **arguments)
+{
+    (void)vm; (void)arguments;
+    return browser_unsupported(name);
+}
+void filesystem_stage_destroy(VM *vm) { (void)vm; }

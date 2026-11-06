@@ -277,3 +277,14 @@ main(): Void {
   assert.equal(result.status,0,result.stderr);
   assert.equal(result.stdout,'Ada\n2\nlist accepted\n1\n');
 });
+
+test('native digest and gzip adapters return structured unsupported errors',async()=>{
+  const result=await run(`import stdlib/digest as digest
+import stdlib/gzip as gzip
+main(): Void {
+  match digest.sha256_open() { Ok(_) => print("unexpected digest handle"), Error(problem) => { print(problem.operation); print(problem.code) } }
+  match gzip.open(1024) { Ok(_) => print("unexpected gzip handle"), Error(problem) => { print(problem.operation); print(problem.code) } }
+}`);
+  assert.equal(result.status,0,result.stderr);
+  assert.equal(result.stdout,'digest_sha256_open\nunsupported\ngzip_open\nunsupported\n');
+});

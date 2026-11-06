@@ -16,7 +16,10 @@ if(!/^format=1$/m.test(manifest)||!/^bytecode_version=9$/m.test(manifest)) throw
 const out=path.join(root,'build/playground');
 fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
 const vm=path.join(core,'vm');
-const sources=fs.readdirSync(vm).filter(n=>n.endsWith('.c')).sort().map(n=>path.join(vm,n));
+// These adapters require native libraries or host filesystem access. The browser
+// adapter supplies their explicit unsupported responses and no-resource cleanup.
+const nativeAdapters=new Set(['digest.c','gzip_stream.c','filesystem_stage.c']);
+const sources=fs.readdirSync(vm).filter(n=>n.endsWith('.c')&&!nativeAdapters.has(n)).sort().map(n=>path.join(vm,n));
 const result=spawnSync(clang,[...sources,path.join(root,'host_capabilities.c'),'-I'+vm,'-O2','-std=c11','-Wall','-Wextra','-Werror','-pedantic','-Wl,-z,stack-size=2097152','-Wl,--max-memory=268435456','-Wl,--strip-all','-o',path.join(out,'vm.wasm')],{stdio:'inherit',env:{...process.env,PATH:path.join(sdk,'bin')}});
 if(result.status!==0) throw new Error('WASI compilation failed.');
 for(const name of ['runtime.mjs','worker.mjs','controller.mjs','app.mjs','examples.mjs','index.html','style.css','site.css','favicon.svg']) fs.copyFileSync(path.join(root,name),path.join(out,name));
