@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {gzipSync} from 'node:zlib';
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {versionAssets} from './assets.mjs';
@@ -29,6 +30,7 @@ for(const name of fs.readdirSync(path.join(dep,'dist')).filter(n=>n.endsWith('.j
 fs.copyFileSync(path.join(dep,'LICENSE-MIT'),path.join(vendor,'LICENSE-MIT'));
 fs.copyFileSync(path.join(core,'LICENSE'),path.join(out,'LICENSE'));
 fs.copyFileSync(path.join(core,'compiler-v9.bc'),path.join(out,'compiler.bc'));
+fs.writeFileSync(path.join(out,'compiler.bc.gz'),gzipSync(fs.readFileSync(path.join(out,'compiler.bc')),{level:9}));
 const stdlib=Object.fromEntries(fs.readdirSync(path.join(core,'stdlib')).filter(n=>n.endsWith('.panack')).sort().map(n=>[n,fs.readFileSync(path.join(core,'stdlib',n),'utf8')]));
 fs.writeFileSync(path.join(out,'stdlib.json'),JSON.stringify(stdlib));
 fs.writeFileSync(path.join(out,'package.json'),'{"type":"module"}\n');

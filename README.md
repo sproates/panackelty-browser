@@ -157,3 +157,8 @@ Native CLI oracle calls use the maintained `bin/panack` entry point.
 The full runtime/assets/publication suite has 23 tests. The 145 fixed VM cases
 retain their 131 exact results and 14 explicit browser host rejections. No timeout,
 source/output/artifact limit or expected safety outcome is relaxed.
+
+The browser downloads `compiler.bc.gz` and decompresses it using the browser’s
+built-in gzip support. This keeps the compiler download within the static preview
+server’s response limit. The uncompressed `compiler.bc` remains in the archive
+for provenance and runtime contract checks; browser execution does not fetch it.

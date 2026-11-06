@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -15,6 +16,11 @@ import {examples, exampleGuides} from '../examples.mjs';
 const root=path.resolve(process.env.PANACKELTY_CORE_SOURCE || 'core');
 const module=await WebAssembly.compile(fs.readFileSync(new URL('vm.wasm', assets)));
 const compiler=fs.readFileSync(new URL('compiler.bc', assets));
+test('compressed compiler fits the preview response limit and preserves released bytes',()=>{
+  const packed=fs.readFileSync(new URL('compiler.bc.gz',assets));
+  assert(packed.length < 1024*1024-4096);
+  assert.deepEqual(gunzipSync(packed),compiler);
+});
 const stdlib=JSON.parse(fs.readFileSync(new URL('stdlib.json', assets)));
 const run=source=>compileAndRun(module,compiler,stdlib,source);
 
