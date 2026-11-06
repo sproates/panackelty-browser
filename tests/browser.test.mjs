@@ -93,7 +93,7 @@ test('output, input, host and timeout failures leave the UI usable',async({page}
   await run(page,'main(): Void { print("after timeout") }');await expect(page.locator('#output')).toHaveText('after timeout\n');
 });
 test('asset failures are explicit and narrow layout stays within viewport',async({page})=>{
-  await page.route('**/compiler.bc',route=>route.abort());
+  await page.route('**/compiler.bc.gz',route=>route.abort());
   await page.goto('/playground/');await page.getByRole('button',{name:'Run program',exact:true}).click();
   await expect(page.getByRole('button',{name:'Run program',exact:true})).toBeEnabled();
   await expect(page.locator('#status')).toHaveText('Stopped or failed');
@@ -193,7 +193,7 @@ test('a cached deployment reloads a matching new example, worker and library', a
     await expect(page.locator('#source')).toHaveValue(/print\(cache_revision\(\)\)/);
     await page.getByRole('button', {name:'Run program', exact:true}).click();
     await expect(page.locator('#output')).toHaveText('Updated library!\n');
-    for (const name of ['app.mjs', 'examples.mjs', 'controller.mjs', 'worker.mjs', 'runtime.mjs', 'vendor/index.js', 'compiler.bc', 'stdlib.json', 'vm.wasm', 'style.css', 'site.css']) {
+    for (const name of ['app.mjs', 'examples.mjs', 'controller.mjs', 'worker.mjs', 'runtime.mjs', 'vendor/index.js', 'compiler.bc.gz', 'stdlib.json', 'vm.wasm', 'style.css', 'site.css']) {
       expect(requests).toContain(`/assets/${nextVersion}/${name}`);
     }
     expect(requests.some(name => name.includes(oldVersion))).toBe(false);
