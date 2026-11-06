@@ -19,11 +19,15 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: sproates/panackelty
-          ref: 3432513b979f1fe1bc57d2bb70ccaa9a62649fd6
+          ref: eb2e5f91c07bb0f2c91fa49ee82a8d770147fb9d
           path: core
           persist-credentials: false
-      - name: Materialize pinned core browser-runtime bundle
-        run: make -C core browser-runtime-bundle && mv core/build/browser-runtime core-runtime
+      - name: Fetch verified alpha.15 browser-runtime bundle
+        run: |
+          curl --fail --location --retry 3 https://github.com/sproates/panackelty/releases/download/v0.1.0-alpha.15/panackelty-browser-runtime-0.1.0-alpha.15.tar.gz -o "$RUNNER_TEMP/browser-runtime.tar.gz"
+          echo "fe7fd9cdddd378ff4c173cd3c075a912633cce3031d035cda1122274780bb2e3  $RUNNER_TEMP/browser-runtime.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/browser-runtime.tar.gz" -C "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/browser-runtime" core-runtime
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -46,8 +50,13 @@ jobs:
           npm run build
           cmp "$RUNNER_TEMP/first-version.txt" build/playground/asset-version.txt
           cmp "$RUNNER_TEMP/first.wasm" build/playground/assets/*/vm.wasm
-      - name: Install native HTTP client dependency
-        run: sudo apt-get update && sudo apt-get install --yes libcurl4-openssl-dev
+      - name: Install native test dependencies
+        run: |
+          # The Azure mirror stalled while downloading Playwright dependencies.
+          # Use Ubuntu's main mirror; normal signed-package verification remains on.
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          sudo apt-get update
+          sudo apt-get install --yes libcurl4-openssl-dev libssl-dev zlib1g-dev
       - name: Build native oracle and run all contracts
         run: make -C core native && npm test
       - name: Restore matching browser engines
