@@ -38,7 +38,7 @@ main(): Void {
   print("Total: \${total}")
 }
 `,
-  guards: `type Seats = Int where value > 0 && value <= 8
+  guards: `type Seats = Int where value => value > 0 && value <= 8
 
 pure ticket_total(count: Seats): Int {
   count * 15

@@ -8,13 +8,14 @@ This repository owns the browser-specific WASI build, host adapter, JavaScript r
 
 CI pins an exact Panackelty core commit and materializes its versioned `browser-runtime-bundle`. The bundle contains matched VM build inputs, compiler seed and standard library with provenance hashes. This repository never follows core `main` implicitly.
 
-The alpha.14 browser build pins core
-`3432513b979f1fe1bc57d2bb70ccaa9a62649fd6`. Compiler, VM and library inputs
-must move together. Receiver calls use type-owned dot dispatch; removed global
-receiver helpers and temporary arrow calls are rejected. The namespace example
-uses the retained bytes constructor and owned methods.
+The alpha.15 browser build pins core
+`eb2e5f91c07bb0f2c91fa49ee82a8d770147fb9d`. Compiler, VM and library inputs
+must move together. Guarded types use an explicit candidate binding (`where value => ...`). Runtime
+validation and structured failures are exercised alongside the existing examples.
+CI downloads the published alpha.15 runtime bundle and verifies its pinned SHA-256;
+the matching core checkout supplies only the native comparison tool and fixtures.
 
-Browser artifact `0.2.1` uses the alpha.14 compiler and standard library.
+Browser artifact `0.3.0` uses the alpha.15 compiler and standard library.
 The website promotes this artifact through a separate dependency update.
 HTTP networking is unavailable in this browser profile; use the native
 toolchain for HTTP clients and servers.

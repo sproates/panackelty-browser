@@ -255,3 +255,25 @@ test('dot-only compiler rejects arrows, removed globals and global fallback in W
   assert.equal(fruit.status,0,fruit.stderr);
   assert.equal(fruit.stdout,'10\n11\n20\n21\n');
 });
+
+test('alpha.15 validates text, collections and record relationships at runtime',async()=>{
+  const source=`type Label = Str where text => text.len() >= 1 && text.is_non_blank()
+type Labels = [Str] where items => items.len() >= 1
+record Window { first: Nat, last: Nat }
+type Ordered = Window where w => w.first <= w.last
+check_label(input: Str): Void {
+  match validate[Label](input) {
+    Ok(label) => print(label),
+    Error(problem) => print(problem.failures.len())
+  }
+}
+main(): Void {
+  check_label("Ada")
+  check_label("")
+  match validate[Labels](["one"]) { Ok(_) => print("list accepted"), Error(_) => print("unexpected list failure") }
+  match validate[Ordered](Window(5,2)) { Ok(_) => print("unexpected record success"), Error(problem) => print(problem.failures.len()) }
+}`;
+  const result=await run(source);
+  assert.equal(result.status,0,result.stderr);
+  assert.equal(result.stdout,'Ada\n2\nlist accepted\n1\n');
+});
